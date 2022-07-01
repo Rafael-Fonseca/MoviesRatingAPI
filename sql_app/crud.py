@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+
 from . import models, schemas
 from passlib.context import CryptContext
 
@@ -32,8 +33,31 @@ def create_user(db: Session, user: schemas.UserCreate, profile_id: int = 0, scor
     return db_user
 
 
+def add_user_score(db: Session, db_user: models.User):
+    db_user.score += 1
+    db.commit()
+    db.refresh(db_user)
+    if db_user.profile.id < 3:
+        return upgrade_user(db, db_user, get_profile(db, db_user.profile_id + 1))
+
+
+def upgrade_user(db: Session, db_user: models.User, db_profile: models.Profile):
+    if db_user.score >= db_profile.min_score:
+        db_user.profile_id += 1
+        db.commit()
+        db.refresh(db_user)
+        return "Operação realizada e o usuário subiu o nível do seu perfil!"
+
+
+def upgrade_user_by_moderator(db: Session, db_user: models.User):
+    db_user.profile_id = 3
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
 def get_profile(db: Session, profile_id: int):
-    return db.query(models.Profile).filter(models.Profile.id == profile_id)
+    return db.query(models.Profile).filter(models.Profile.id == profile_id).first()
 
 
 def create_profile(db: Session, profile: schemas.ProfileCreate):
@@ -45,27 +69,38 @@ def create_profile(db: Session, profile: schemas.ProfileCreate):
 
 
 def get_rating(db: Session, rating_id: int):
-    return db.query(models.Rating).filter(models.Rating.id == rating_id)
+    return db.query(models.Rating).filter(models.Rating.id == rating_id).first()
 
 
 def get_ratings_by_movie(db: Session, movie: str):
-    return db.query(models.Rating).filter(models.Rating.movie == movie)
+    return db.query(models.Rating).filter(models.Rating.movie == movie).all()
 
 
 def get_ratings_by_user(db: Session, user_id: int):
-    return db.query(models.Rating).filter(models.Rating.user_id == user_id)
+    return db.query(models.Rating).filter(models.Rating.user_id == user_id).all()
+
+
+def get_ratings_by_movie_and_user(db: Session, user_id: int, movie: str):
+    return db.query(models.Rating).filter(models.Rating.user_id == user_id, models.Rating.movie == movie).first()
 
 
 def create_rating(db: Session, rating: schemas.RatingCreate):
-    db_rating = models.Profile(**rating.dict())
+    db_rating = models.Rating(**rating.dict())
     db.add(db_rating)
     db.commit()
     db.refresh(db_rating)
     return db_rating
 
 
+def edit_rating(db: Session, rating: schemas.RatingCreate, db_rating: models.Rating):
+    db_rating.evaluation = rating.evaluation
+    db.commit()
+    db.refresh(db_rating)
+    return db_rating
+
+
 def get_comment(db: Session, comment_id: int):
-    return db.query(models.Comment).filter(models.Comment.id == comment_id)
+    return db.query(models.Comment).filter(models.Comment.id == comment_id).first()
 
 
 def get_comments_by_movie(db: Session, movie: str):
@@ -77,8 +112,45 @@ def get_comments_by_user(db: Session, user_id: int):
 
 
 def create_comment(db: Session, comment: schemas.CommentCreate):
-    db_comment = models.Profile(**comment.dict())
+    plain_comment = comment.dict()
+    plain_comment['movie'] = plain_comment['movie'].lower()
+    db_comment = models.Comment(**plain_comment)
     db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+    return db_comment
+
+
+def edit_comment(db: Session, comment: schemas.CommentCreate, comment_id: int):
+    to_update_comment = db.query(models.Comment).filter_by(id=comment_id).first()
+    if to_update_comment.movie != comment.movie or to_update_comment.user_id != comment.user_id:
+        return False
+    to_update_comment.description = comment.description
+
+    db.commit()
+    db.refresh(to_update_comment)
+    return to_update_comment
+
+
+def delete_comment(db: Session, db_comment: models.Comment):
+    db.delete(db_comment)
+    db.commit()
+    return "Comentário deletado"
+
+
+def evaluate_comment(db: Session, db_comment: models.Comment, evaluate: bool):
+    if evaluate:
+        db_comment.like += 1
+    else:
+        db_comment.dislike += 1
+
+    db.commit()
+    db.refresh(db_comment)
+    return db_comment
+
+
+def comment_repeated(db: Session, db_comment: models.Comment, repeated: bool):
+    db_comment.repeated = repeated
     db.commit()
     db.refresh(db_comment)
     return db_comment

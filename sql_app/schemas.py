@@ -21,9 +21,9 @@ class Rating(RatingBase):
 class CommentBase(BaseModel):
     description: str
     movie: str
-    respond_to: int
-    mention_to: int
-    create_at: datetime
+    respond_to: int = None
+    mention_to: int = None
+    create_at: datetime = datetime.now()
     user_id: int
 
 
@@ -33,9 +33,9 @@ class CommentCreate(CommentBase):
 
 class Comment(CommentBase):
     id: int
-    like: int
-    dislike: int
-    repeated: bool
+    like: int = None
+    dislike: int = None
+    repeated: bool = None
 
     class Config:
         orm_mode = True
