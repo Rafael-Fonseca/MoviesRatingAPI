@@ -1,8 +1,8 @@
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy.orm import Session
-
 from sql_app import crud, models, schemas
 from sql_app.database import SessionLocal, engine
+import httpx
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -16,6 +16,9 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+client = httpx.AsyncClient()
 
 
 # TODO: Colocar mensagem informando url correta, local de documentação...  postgress EDB pgadmin
@@ -59,11 +62,14 @@ async def authenticate():
 
 
 # Devolve todas as informações de um filme
-# TODO: Testar nome de filmes com espaço, maiusculas e minusculas
-@app.get("/movie/{movie_name}/")
+# TODO: Capturar informações do filme que estão no banco de dados
+# TODO: Criar modelo movie Pydantico para retornar apenas as informações desejadas
+@app.get("/movie/{movie_name}/", response_model=schemas.Movie)
 async def read_movie(movie_name: str):
-    'http://www.omdbapi.com/?apikey=4f23974&t=O+vento+levou'
-    pass
+    base_url = 'http://www.omdbapi.com/?apikey=4f23974&t='
+    complement = movie_name.strip().replace(' ', '+')
+    response = await client.get(base_url + complement)
+    return schemas.MovieCreate(**response.json())
 
 
 # Insere comentário em filme

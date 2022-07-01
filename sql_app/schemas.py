@@ -83,3 +83,32 @@ class Profile(ProfileBase):
 
     class Config:
         orm_mode = True
+
+
+class MovieBase(BaseModel):
+    Title: str
+    Year: str
+    Rated: str
+    Released: str
+    Runtime: str
+    Genre: str
+    Director: str
+    Writer: str
+    Actors: str
+    Plot: str
+    Language: str
+    Country: str
+    Awards: str
+    Poster: str
+    Type: str
+    totalSeasons: str
+
+
+class MovieCreate(MovieBase):
+    pass
+
+
+class Movie(MovieBase):
+
+    class Config:
+        orm_mode = True
