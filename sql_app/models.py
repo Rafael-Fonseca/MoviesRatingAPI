@@ -57,6 +57,7 @@ class Comment(Base):
     mention_to = Column(Integer)
     like = Column(Integer)
     dislike = Column(Integer)
+    repeated = Column(Boolean)
     create_at = Column(DateTime)
 
     user_id = Column(Integer, ForeignKey("users.id"))

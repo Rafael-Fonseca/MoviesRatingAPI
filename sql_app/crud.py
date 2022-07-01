@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from . import models, schemas
+from passlib.context import CryptContext
 
 
 def get_user(db: Session, user_id: int):
@@ -14,9 +15,16 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
 
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def get_password_hash(password: str):
+    return pwd_context.hash(password)
+
+
 def create_user(db: Session, user: schemas.UserCreate, profile_id: int = 0, score: int = 0):
-    fake_hashed_password = user.password + "notreallyhashed"  # TODO: HASHEIA!!!
-    db_user = models.User(username=user.username, hashed_password=fake_hashed_password,
+    hashed_password = get_password_hash(user.password)
+    db_user = models.User(username=user.username, hashed_password=hashed_password,
                           profile_id=profile_id, score=score)
     db.add(db_user)
     db.commit()

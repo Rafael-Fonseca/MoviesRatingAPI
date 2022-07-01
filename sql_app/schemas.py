@@ -35,6 +35,7 @@ class Comment(CommentBase):
     id: int
     like: int
     dislike: int
+    repeated: bool
 
     class Config:
         orm_mode = True
