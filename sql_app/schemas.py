@@ -18,6 +18,28 @@ class Rating(RatingBase):
         orm_mode = True
 
 
+class CommentBase(BaseModel):
+    description: str
+    movie: str
+    respond_to: int
+    mention_to: int
+    create_at: datetime
+    user_id: int
+
+
+class CommentCreate(CommentBase):
+    pass
+
+
+class Comment(CommentBase):
+    id: int
+    like: int
+    dislike: int
+
+    class Config:
+        orm_mode = True
+
+
 class UserBase(BaseModel):
     username: str
 
@@ -31,6 +53,7 @@ class User(UserBase):
     score: int
     profile_id: int
     evaluations: list[Rating] = []
+    comments: list[Comment] = []
 
     class Config:
         orm_mode = True
@@ -56,28 +79,6 @@ class ProfileCreate(ProfileBase):
 
 class Profile(ProfileBase):
     id: int
-
-    class Config:
-        orm_mode = True
-
-
-class CommentBase(BaseModel):
-    description: str
-    movie: str
-    respond_to: int
-    mention_to: int
-    create_at: datetime
-    user_id: int
-
-
-class CommentCreate(CommentBase):
-    pass
-
-
-class Comment(CommentBase):
-    id: int
-    like: int
-    dislike: int
 
     class Config:
         orm_mode = True

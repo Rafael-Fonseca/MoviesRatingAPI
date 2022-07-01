@@ -14,6 +14,7 @@ class User(Base):
     profile_id = Column(Integer, ForeignKey("profiles.id"))
     profile = relationship("Profile", back_populates="users")
     evaluations = relationship("Rating", back_populates="user")
+    comments = relationship("Comment", back_populates="user")
 
 
 class Profile(Base):
